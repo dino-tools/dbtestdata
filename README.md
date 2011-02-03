@@ -1,4 +1,3 @@
-
 # NAME
 
 dbtestdata
@@ -27,7 +26,17 @@ dbtestdata/ ディレクトリの内容があれば動作します。
         --username=root \
         --password \
         --database=hogedb \
-        --conf=./conf.pl
+        --conf=./conf1.pl \
+        --conf=./conf2.pl
+
+**コマンドライン引数の説明**
+
+* insert|update|delete - データの挿入 or ダミー化 or 不要データの削除 のいずれかの動作モードを選択します。
+  insert or updateでは設定ファイルのupdatesの内容を参照します。deleteでは設定ファイルのdeletesの内容を参照します。
+* --username - データベースのユーザ名。
+* --password - データベースにパスワードがかかっているならこれを指定してください。
+* --database - ターゲットのデータベース名。
+* --conf=FILE名 - 設定ファイル名。複数個指定できます。
 
 **設定ファイルについて**
 
@@ -58,10 +67,7 @@ dbtestdata/ ディレクトリの内容があれば動作します。
 
 **データ生成関数**
 
-これらが使えます。詳細については以下のファイルの関数コメントを参照して下さい。
-
-* data/VariableDataGenerator.pm
-* sql/VariableSQLGenerator.pm
+これらが使えます。
 
     RANDOM_LITERAL
     RANDOM_INTEGER
@@ -84,7 +90,12 @@ dbtestdata/ ディレクトリの内容があれば動作します。
     SPRINTF
     FOLD
     SQL
-        
+
+詳細については以下のファイルの関数コメントを参照して下さい。
+
+* data/VariableDataGenerator.pm
+* sql/VariableSQLGenerator.pm
+
 # EXAMPLE
 
     package example1;
