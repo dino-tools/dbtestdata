@@ -342,7 +342,7 @@
         return {
             "type" => 'RANDOM_TEL',
             "gen"  => sub{
-                return sprintf("0%2d-%03d-%04d",
+                return sprintf("0%02d-%03d-%04d",
                     int rand 100,
                     int rand 1000,
                     int rand 10000
