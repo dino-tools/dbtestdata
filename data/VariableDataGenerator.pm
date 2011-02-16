@@ -235,8 +235,8 @@
     sub RANDOM_JA_NAME_KAN {
         my($separator) = @_;
         
-        if ($separator) {
-            $separator = ' ';
+        if (! $separator) {
+            $separator = '';
         }
         
         my $genFamiry = RANDOM_JA_FAMILYNAME_KAN()->{'gen'};
