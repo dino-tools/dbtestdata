@@ -18,7 +18,7 @@
   #   perl dbtestdata.pl insert|update|delete OPTIONS
   ##
   
-  my $PULSE_COUNT = 10000;
+  my $PULSE_COMMIT = 10000;
   our %options = (
     'conf' => []
   );
@@ -48,12 +48,12 @@
     
     my $db = getConnection();
     foreach my $conffile (@confs) {
-      my $conf = require($conffile);
+      my $config = require($conffile);
       my $proc = "main_${mode}";
       
-      STDOUT->print("<", $conf->{'name'}, ">\n");
+      STDOUT->print("<", $config->{'name'}, ">\n");
       no strict 'refs';
-      $proc->($db, $conf->{'updates'}, $conf->{'deletes'});
+      $proc->($db, $config);
     }
     
     STDOUT->print("\n");
@@ -84,8 +84,7 @@
       $password
     ) || die $DBI::error;
     
-    $db->{AutoCommit} = 0;
-    
+    # ここがMySQL5依存(^^;
     $db->do("SET NAMES utf8");
     $db->do("SET SESSION wait_timeout = 1000000");
     
@@ -96,9 +95,12 @@
   # テストデータのINSERTをします
   ##
   sub main_insert {
-    my($db, $updates, $deletes) = @_;
+    my($db, $config) = @_;
     
-    while (my($table, $conf) = each(%$updates)) {
+    $db->{AutoCommit} = 0;
+    my $confInsert = $config->{'insert'};
+    
+    while (my($table, $conf) = each(%$confInsert)) {
       STDOUT->print("INSERT $table\n");
       
       local $| = 1;
@@ -112,19 +114,16 @@
         ) || die $DBI::error;
         
         $count++;
-        if (! ($count % $PULSE_COUNT)) {
-          my $bar = $count % ($PULSE_COUNT*2) ? '|' : '-';
-          STDOUT->print("\r$bar $count");
-          if ($conf->{'pulse_commit'}) {
-            STDOUT->print(" commit");
-            $db->commit() || die $DBI::error;
-          }
+        if (! ($count % $PULSE_COMMIT)) {
+          my $bar = $count % ($PULSE_COMMIT*2) ? '|' : '-';
+          $db->commit() || die $DBI::error;
+          STDOUT->print("\r$bar $count commited.");
         }
       }
       
       $db->commit() || die $DBI::error;
+      STDOUT->print("\r+ $count commited.\n");
       
-      STDOUT->print("\r+ $count\n");
       STDOUT->print("finished.\n");
     }
   }
@@ -133,9 +132,12 @@
   # テストデータのUPDATEをします
   ##
   sub main_update {
-    my($db, $updates, $deletes) = @_;
+    my($db, $config) = @_;
     
-    while (my($table, $conf) = each(%$updates)) {
+    $db->{AutoCommit} = 0;
+    my $confUpdate = $config->{'update'};
+    
+    while (my($table, $conf) = each(%$confUpdate)) {
       STDOUT->print("UPDATE $table\n");
       
       my $sql = sprintf("SELECT %s FROM %s", $conf->{'primary'}, $table);
@@ -159,19 +161,16 @@
         ) || die $DBI::error;
         
         $count++;
-        if (! ($count % $PULSE_COUNT)) {
-          my $bar = $count % ($PULSE_COUNT*2) ? '|' : '-';
-          STDOUT->print("\r$bar $count");
-          if ($conf->{'pulse_commit'}) {
-            STDOUT->print(" commit");
-            $db->commit() || die $DBI::error;
-          }
+        if (! ($count % $PULSE_COMMIT)) {
+          my $bar = $count % ($PULSE_COMMIT*2) ? '|' : '-';
+          $db->commit() || die $DBI::error;
+          STDOUT->print("\r$bar $count commited.");
         }
       }
       
       $db->commit() || die $DBI::error;
+      STDOUT->print("\r+ $count commited.\n");
       
-      STDOUT->print("\r+ $count\n");
       STDOUT->print("finished.\n");
     }
   }
@@ -180,12 +179,14 @@
   # レコードを全DELETEします
   ##
   sub main_delete {
-    my($db, $updates, $deletes) = @_;
+    my($db, $config) = @_;
     
-    foreach my $t (@$deletes) {
+    $db->{AutoCommit} = 1;
+    my $confDelete = $config->{'delete'};
+    
+    foreach my $t (@$confDelete) {
       STDOUT->print("DELETE $t\n");
       $db->do("DELETE FROM $t") || die $DBI::error;
-      $db->commit() || die $DBI::error;
       STDOUT->print("finished.\n");
     }
   }

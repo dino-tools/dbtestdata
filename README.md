@@ -33,8 +33,7 @@ dbtestdata/ ディレクトリの内容があれば動作します。
 
 **コマンドライン引数の説明**
 
-* insert|update|delete - データの挿入 or ダミー化 or 不要データの削除 のいずれかの動作モードを選択します。
-  insert or updateでは設定ファイルのupdatesの内容を参照します。deleteでは設定ファイルのdeletesの内容を参照します。
+* insert|update|delete - データの挿入 or ダミー化 or 不要データ削除 のいずれかの動作モードを選択します。
 * --username - データベースのユーザ名。
 * --password - データベースにパスワードがかかっているならこれを指定してください。
 * --database - ターゲットのデータベース名。
@@ -46,11 +45,9 @@ dbtestdata/ ディレクトリの内容があれば動作します。
 
     {
       name => この定義の名前,
-      updates => {
+      insert => {                           …insert動作モード用の設定です。
         テーブル名1 => {
-          primary => 主キーカラム名,
-          count => テストデータ作成時の作成レコード数,
-          pluse_commit => 10000件ごとにコミットするかどうか（データ量が巨大な場合高速です）,
+          count => 作成レコード数,
           clazz => {
             カラム名1 => データ生成関数,
             カラム名2 => データ生成関数
@@ -58,12 +55,24 @@ dbtestdata/ ディレクトリの内容があれば動作します。
         },
         テーブル名2 => {
         },
-        テーブル名3 => {
-        },
+        ...
       },
-      deletes => [
+      update => {                           …update動作モード用の設定です。
+        テーブル名1 => {
+          primary => 主キーカラム名,
+          clazz => {
+            カラム名1 => データ生成関数,
+            カラム名2 => データ生成関数
+          }
+        },
+        テーブル名2 => {
+        },
+        ...
+      },
+      delete => [                           …delete動作モード用の設定です。
         レコードを全削除したいテーブル名1,
-        レコードを全削除したいテーブル名2
+        レコードを全削除したいテーブル名2,
+        ...
       ]
     }
 
@@ -110,11 +119,9 @@ dbtestdata/ ディレクトリの内容があれば動作します。
     
     return {
       name => __PACKAGE__,
-      updates => {
+      update => {
         t_user => {
           primary => "id",
-          count => 50000,
-          pulse_commit => 1,
           clazz => {
             age                       => RANDOM_INTEGER(70, 15),
             card_types_id             => RANDOM_LITERAL(0, 5),
@@ -126,8 +133,6 @@ dbtestdata/ ディレクトリの内容があれば動作します。
         },
         t_order => {
           primary => "id",
-          count => 10000000,
-          pulse_commit => 1,
           clazz => {
             t_user_id                 => RANDOM_INTEGER(50000, 1),
             price                     => RANDOM_INTEGER(100000, 1000),
@@ -137,7 +142,7 @@ dbtestdata/ ディレクトリの内容があれば動作します。
           }
         }
       },
-      deletes => [ qw(
+      delete => [ qw(
         t_mail_log
         t_credit_card_log
       )]
@@ -146,6 +151,7 @@ dbtestdata/ ディレクトリの内容があれば動作します。
 # CHANGELOG
 
 * 2011/02/03 初版
+* 2011/02/17 設定ファイルの形式を変更しinsertとupdateを分離した。
 
 # AUTHOR
 
