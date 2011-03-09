@@ -59,7 +59,6 @@
     STDOUT->print("\n");
     STDOUT->print("ended.\n");
     
-    $db->rollback();
     return 0;
   }
 
@@ -97,23 +96,24 @@
   sub main_insert {
     my($db, $config) = @_;
     
+    local $| = 1;
     $db->{AutoCommit} = 0;
     my $confInsert = $config->{'insert'};
     
     while (my($table, $conf) = each(%$confInsert)) {
       STDOUT->print("INSERT $table\n");
       
-      local $| = 1;
       my $count = 0;
-      for (my $i=0; $i<$conf->{'count'}; $i++) {
+      while ($count < $conf->{'count'}) {
+        $count++;
+        
         $db->do(
           INSERT_SQL(
             $table,
-            $conf->{'clazz'}
+            (ref($conf->{'clazz'}) eq 'CODE') ? $conf->{'clazz'}->($count) : $conf->{'clazz'}
           )
         ) || die $DBI::error;
         
-        $count++;
         if (! ($count % $PULSE_COMMIT)) {
           my $bar = $count % ($PULSE_COMMIT*2) ? '|' : '-';
           $db->commit() || die $DBI::error;
@@ -134,6 +134,7 @@
   sub main_update {
     my($db, $config) = @_;
     
+    local $| = 1;
     $db->{AutoCommit} = 0;
     my $confUpdate = $config->{'update'};
     
@@ -149,18 +150,18 @@
         push(@primaryKeys, $row->[0]);
       }
       
-      local $| = 1;
       my $count = 0;
-      foreach my $id (@primaryKeys) {
+      foreach my $pk (@primaryKeys) {
+        $count++;
+        
         $db->do(
           UPDATE_SQL(
             $table,
-            $conf->{'clazz'},
-            [ WHERE($conf->{'primary'}, $id) ]
+            (ref($conf->{'clazz'}) eq 'CODE') ? $conf->{'clazz'}->($pk) : $conf->{'clazz'},
+            [ WHERE($conf->{'primary'}, $pk) ]
           )
         ) || die $DBI::error;
         
-        $count++;
         if (! ($count % $PULSE_COMMIT)) {
           my $bar = $count % ($PULSE_COMMIT*2) ? '|' : '-';
           $db->commit() || die $DBI::error;
