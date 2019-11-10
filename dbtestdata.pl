@@ -141,6 +141,15 @@
     while (my($table, $conf) = each(%$confUpdate)) {
       STDOUT->print("UPDATE $table\n");
       
+      my $sql_count = sprintf("SELECT count(%s) FROM %s", $conf->{'primary'}, $table);
+      my $sth = $db->prepare($sql_count) || die $DBI::error;
+      $sth->execute() || die $DBI::error;
+      my @primaryKeysCount;
+      while (my $row = $sth->fetchrow_arrayref()) {
+        push(@primaryKeysCount, $row->[0]);
+      }
+      STDOUT->print("\r$bar $primaryKeysCount[0] records will update.");
+
       my $sql = sprintf("SELECT %s FROM %s", $conf->{'primary'}, $table);
       my $sth = $db->prepare($sql) || die $DBI::error;
       $sth->execute() || die $DBI::error;
